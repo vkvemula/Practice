@@ -1,0 +1,71 @@
+<apex:page controller="JSONBuilderCon" sidebar="false">
+    
+    <head>
+        <!-- included scripts and css -->
+        <apex:includeScript value="{!$Resource.jQuery}"/>
+        <!--- <apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.js')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.bootstrap, 'css/bootstrap.css')}"/> -->
+        
+        <apex:includeScript value="{!URLFOR($Resource.select2, 'select2.js')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.select2, 'select2.css')}"/>
+        
+        <style>
+            .select2-container{
+                min-width: 150px!important;
+            }
+        </style>
+    </head>
+    
+    <apex:form >
+        <apex:pageMessages id="theMessages"/>
+        <apex:pageBlock id="metaBlock" rendered="{!NOT(isError)}">
+            <script>
+                $(function(){
+                    $('select').select2();
+                });
+            </script>
+            <apex:pageBlockSection >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Select Action"/>
+                    <apex:selectList value="{!action}" multiselect="false" size="1">
+                        <apex:selectOptions value="{!allActions}"/>
+                        <apex:actionSupport event="onchange" rerender="metaBlock,theMessages"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Select Metadata Type"/>
+                    <apex:selectList value="{!selectedType}" multiselect="false" size="1">
+                        <apex:selectOptions value="{!allTypes}"/>
+                        <apex:actionSupport event="onchange" action="{!buildJSONasInput}" rerender="metaBlock,theMessages"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockTable value="{!metadataFieldVals}" var="mfield" rendered="{!showMetaDataFieldsValues}">
+                    <apex:column headerValue="Property">
+                        <apex:outputText value="{!mfield}"/>
+                    </apex:column>
+                    <apex:column headerValue="Value">
+                        <apex:inputText value="{!metadataFieldVals[mfield]}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+                
+                <!-- the section to store read metadataName -->
+                <apex:pageBlockSectionItem rendered="{!NOT(showMetaDataFieldsValues) && action == 'READ'}">
+                    <apex:outputLabel >MetaData Name</apex:outputLabel>
+                    <apex:inputText value="{!readJSON.metadataName}"/>
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Generate JSON" action="{!generateJSONforRESET}" rerender="jsonBlock,theMessages"/>
+                <apex:commandButton value="Save" action="{!saveReset}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:pageBlock id="jsonBlock">
+            <apex:outputtext value="{!jsonString}"/>
+        </apex:pageBlock>
+    </apex:form>
+    
+</apex:page>

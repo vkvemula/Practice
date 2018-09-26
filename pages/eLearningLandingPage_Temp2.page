@@ -1,0 +1,716 @@
+<!-- @author Manish. Please consult in case of any isssue, mk131288@gmail.com -->
+        <apex:page controller="ElearningLandingController" docType="HTML-5.0" showHeader="false" sidebar="false" standardStylesheets="false" id="pageId" >
+
+            <apex:includeScript value="{!$Resource.jQuery}"/>
+            <apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.sidr, 'js/jquery.sidr.min.js')}"/>
+            <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+            
+            <apex:stylesheet value="{!URLFOR($Resource.bootstrap, 'css/bootstrap.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.sidr, 'css/jquery.sidr.light.css')}"/>
+            <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+            
+
+            <style>
+            
+                .upperSection table tr{
+                    vertical-align:top;
+                }
+                
+                .eLearnButton{
+                    margin:3px 1px;
+                    box-shadow: 2px 2px 1px #000;
+                    width:100%;
+                }
+                
+                #upperSectionFrameTable{
+                    border-spacing:2px;
+                    border-collapse:collapse;
+                }
+            
+                div.upperSection{
+                    margin-top:10px;
+                }
+                
+                div.workSpace{
+                    margin:10px 5px;
+                    padding:2px;
+                    border-top: 4px solid #555;
+                    height:800px;
+                }
+                
+                div.taskButtonClass, div.exerciseButtonClass{
+                    border-top:1px solid #AAA;
+                    padding-top:5px;
+                    /*position : absolute;*/
+                    bottom:5px;
+                    left:10px;
+                    right:10px;
+                }
+                
+                #detailsTable{
+                    width:100%;
+                }
+                
+                .currentTaskRow{
+                    color:#1D7824;
+                    font-style:italic;
+                    font-weight:bold;
+                }
+                
+                .completedTaskRow{
+                    color:#0B148C;
+                }
+                
+                #cell-logo{
+                    width:10%;
+                }
+                
+                #cell-exercise{
+                    width:40%;
+                    border-right: 2px solid #555;
+                    position : relative;
+                }
+                
+                #cell-tasks{
+                    width:40%;
+                    border-left: 2px solid #555;
+                    position : relative;
+                }
+                
+                #cell-buttons{
+                    width:10%;
+                    vertical-align:middle;
+                }
+                
+                #exerciseBlock, #tasksBlock, .detailBody{
+                    height:100%;
+                    padding:10px;
+                    
+                }
+                
+                #exerciseBody, #tasksBody{
+                    padding:10px;
+                    margin-bottom:10px;
+                }
+                
+                #exerciseHeader, #tasksHeader, .detailHeader{
+                    background-color:#DDD;
+                    box-shadow: 2px 2px 1px #555;
+                    padding:1px 5px;
+                }
+                
+                #stepsTable tr td, #tasksTable tr td{
+                    padding:1px 3px;
+                    vertical-align:top;
+                }
+                
+                body{
+                    
+                }
+                
+                #detailsModal, #detailsModal_Task{
+                    margin:0px!important;
+                    left:20%!important;
+                    width:60%!important;
+                }
+                
+                .exerciseBody_QuickView{
+                    position: fixed!important;
+                    top: 50px;
+                    right: 0px;
+                    float: right;
+                    max-width: 40%;
+                    z-index: 1000;
+                }
+                
+                .exerciseBody_QuickView #exerciseBody{
+                    border: 2px solid #888;
+                    /* background-color:#EEE!Important; */
+                    z-index: 500;
+                }
+                
+                .exerciseBody_QuickView .exercisePuller{
+                    background-color:#888!Important;
+                    z-index: 1000;
+                    border: 2px solid #888;
+                    padding:5px;
+                }
+                
+                .quickView_table{
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                #sidr{
+                   
+                }
+            </style>
+            
+            <div class="navbar navbar-static-top">
+                <div class="navbar-inner">
+                    <a class="brand" href="#">{!pageHeader}</a>
+                    <ul class="nav pull-right">
+                        <li><a href="javascript:toggleUpperPane()"><i class="icon-tasks"/></a></li>
+                        <li><a id="simple-menu" href="#sidr">Toogle menu</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- <div id="sidr">
+                <ul>
+                    <li><a href="#">List 1</a></li>
+                    <li class="active"><a href="#">List 2</a></li>
+                    <li><a href="#">List 3</a></li>
+                </ul>
+            </div> -->
+            
+            
+            <apex:outputPanel id="mainELearnPanel">
+                <div id="upperDiv" class="upperSection">
+                    <table id="upperSectionFrameTable" style="width:100%">
+                        <tr>
+                            <!-- cell containing the logo -->
+                            <td id="cell-logo">
+                                <apex:image value="{!$Resource.eLearningLogo}"/>
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <button class="eLearnButton btn btn-danger" onclick="rollBack();">Reset Data</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <button class="eLearnButton btn btn-success">Submit Work</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            
+                            <!-- cell contianing the task -->
+                            <td id="cell-exercise">
+                                <div id="exerciseBlock">
+                                    <div id="exerciseHeader">{!exercise.Name}</div>
+                                    <div id="exerciseBody">
+                                        <p>Objective : <apex:outputField value="{!exercise.Body__c}"/></p>
+                                        <table id="tasksTable" class="table-hover">
+                                            <apex:repeat value="{!exercise.Tasks__r}" var="st">
+                                                <tr>
+                                                    <td>
+                                                        <apex:outputPanel rendered="{!tasksMap[st.id].isValid != null && tasksMap[st.id].isValid}">
+                                                            <i class="icon-check"/>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel rendered="{!tasksMap[st.id].isValid != null && NOT(tasksMap[st.id].isValid) && (NOT(tasksMap[st.id].isReset) || tasksMap[st.id].isReset = null)}">
+                                                            <a href="#errorModal" data-toggle="modal" onclick="getErrorsforTask('{!tasksMap[st.id].messages}');"><i class="icon-warning-sign"/></a>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel rendered="{!(st.Sequence__c >= currentTaskSequence && tasksMap[st.id].isValid = null) || tasksMap[st.id].isReset}">
+                                                            <span>{!st.Sequence__c}.</span>
+                                                        </apex:outputPanel>
+                                                    </td>
+                                                    <td class="{!IF(st.id == currentTaskId, 'currentTaskRow',IF(st.Sequence__c < currentTaskSequence, 'completedTaskRow', ''))}"><apex:outputField value="{!st.Body__c}"/></td>
+                                                    <td width="30px"><apex:outputField styleClass="pull-right" value="{!st.Status_Image__c}"/></td>
+                                                </tr>
+                                            </apex:repeat>
+                                        </table>
+                                    </div>
+                                    
+                                    <script>
+                                        $(document).ready(function() {
+                                          $('#simple-menu').sidr({
+                                              side: 'right'
+                                          });
+                                        });
+                                    </script>
+                                    
+                                    <!-- quickview box -->
+                                    <div id="sidr"> <!-- class="exerciseBody_QuickView" -->
+                                        <div id="exercisePuller_ext" class="exercisePuller well" onclick="toggleQuickView()" style="display:none">
+                                            <i class="icon-chevron-left"/>
+                                        </div>
+                                        <div id="quickView_table_div"  >
+                                            <table class="quickView_table" >
+                                                <tr>
+                                                    <td>
+                                                        <div id="exercisePuller_int" class="exercisePuller well" onclick="toggleQuickView()" style="display:none">
+                                                            <i class="icon-chevron-right"/>
+                                                        </div>
+                                                    </td>
+                                                    <td id="exerciseBody_td">
+                                                        <div id="exerciseBody"> <!-- class="well" -->
+                                                            <p>Objective : <apex:outputField value="{!exercise.Body__c}"/></p>
+                                                            <table id="tasksTable" class="table-hover">
+                                                                <apex:repeat value="{!exercise.Tasks__r}" var="st">
+                                                                    <tr>
+                                                                        <td>
+                                                                            <apex:outputPanel rendered="{!tasksMap[st.id].isValid != null && tasksMap[st.id].isValid}">
+                                                                                <i class="icon-check"/>
+                                                                            </apex:outputPanel>
+                                                                            <apex:outputPanel rendered="{!tasksMap[st.id].isValid != null && NOT(tasksMap[st.id].isValid) && (NOT(tasksMap[st.id].isReset) || tasksMap[st.id].isReset = null)}">
+                                                                                <a href="#errorModal" data-toggle="modal" onclick="getErrorsforTask('{!tasksMap[st.id].messages}');"><i class="icon-warning-sign"/></a>
+                                                                            </apex:outputPanel>
+                                                                            <apex:outputPanel rendered="{!(st.Sequence__c >= currentTaskSequence && tasksMap[st.id].isValid = null) || tasksMap[st.id].isReset}">
+                                                                                <span>{!st.Sequence__c}.</span>
+                                                                            </apex:outputPanel>
+                                                                        </td>
+                                                                        <td class="{!IF(st.id == currentTaskId, 'currentTaskRow',IF(st.Sequence__c < currentTaskSequence, 'completedTaskRow', ''))}"><apex:outputField value="{!st.Body__c}"/></td>
+                                                                        <td width="30px"><apex:outputField styleClass="pull-right" value="{!st.Status_Image__c}"/></td>
+                                                                    </tr>
+                                                                </apex:repeat>
+                                                            </table>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <div class="exerciseButtonClass">
+                                                <a class="btn btn-mini btn-info" onclick="getHintForTask();" href="#hint" role="button" data-toggle="modal">Hint</a>
+                                                <a class="btn btn-mini btn-info" href="#detailsModal_Task" role="button" data-toggle="modal">Details</a>
+                                                <button class="btn btn-mini btn-primary" onclick="nextTask()">Next Task</button>
+                                                <button class="btn btn-mini btn-primary" onclick="prevTaskAndReset()">Reset</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                    <br/>
+                                    <div class="exerciseButtonClass">
+                                        <a class="btn btn-mini btn-info" onclick="getHintForTask();" href="#hint" role="button" data-toggle="modal">Hint</a>
+                                        <a class="btn btn-mini btn-info" href="#detailsModal_Task" role="button" data-toggle="modal">Details</a>
+                                        <button class="btn btn-mini btn-primary" onclick="nextTask()">Next Task</button>
+                                        <button class="btn btn-mini btn-primary" onclick="prevTaskAndReset()">Reset</button>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- cell contianing the current step of the task -->
+                            <td id="cell-tasks">
+                                <apex:outputPanel id="stepPanel" >
+                                    <div id="tasksBlock">
+                                        <div id="tasksHeader">Steps</div>
+                                        <div id="tasksBody">
+                                            <apex:outputPanel rendered="{!currentStep != null && stepsMap[currentStep.id].messages.size > 0}">
+                                                <!-- Modal -->
+                                                    <div id="messageModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+                                                        <div class="modal-header">
+                                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                            <h3 id="messageModalLabel">Message</h3>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <apex:repeat value="{!stepsMap[currentStep.id].messages}" var="msg" rendered="{!currentStep != null}">
+                                                                <p><apex:outputText escape="false" value="{!msg}" /></p>
+                                                            </apex:repeat>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                                                            {!stepsMap[currentStep.id].isValid}
+                                                            <button class="btn btn-primary" onClick="continueStepAndClose();">Continue</button>
+                                                        </div>
+                                                    </div>
+        <!--                                     <div class="alert"> -->
+        <!--                                       <button type="button" class="close" data-dismiss="alert">&times;</button>  -->
+        <!--                                       <apex:repeat value="{!stepsMap[currentStep.id].messages}" var="msg" rendered="{!currentStep != null}"> -->
+        <!--                                         <p class="text-error"><strong>Message: </strong><apex:outputText escape="false" value="{!msg}" /></p> -->
+        <!--                                       </apex:repeat> -->
+        <!--                                     </div> -->
+                                            </apex:outputPanel>
+                                            <!-- <p>{!currentTask.Body__c}</p> -->
+                                            <apex:outputPanel rendered="{!currentStep != null}">
+                                            <table id="stepsTable" class="table-hover">
+                                                <tr>
+                                                    <td><span>{!currentStep.Sequence__c}.</span></td>
+                                                    <td><apex:outputField value="{!currentStep.Body__c}"/></td>
+                                                </tr>
+                                            </table>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="taskButtonClass">
+                                            <a class="btn btn-mini btn-info" onclick="getHint('{!currentStepId}');" href="#hint" role="button" data-toggle="modal">Hint</a>
+                                            <a class="btn btn-mini btn-info" href="#detailsModal" role="button" data-toggle="modal">Details</a>
+                                            <button class="btn btn-mini btn-primary" onclick="nextStep()">Next Step</button>
+                                            <button class="btn btn-mini btn-primary" onclick="prevStepAndReset()">Reset</button>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </td>
+                            
+                            <!-- cell containing the buttons on the right most end -->
+                            <!-- <td id="cell-buttons">
+                                <center>
+                                    <button class="eLearnButton btn btn-danger" onclick="rollBack();">Reset Data</button>
+                                    <button class="eLearnButton btn btn-success">Submit Work</button>
+                                </center>
+                            </td> -->
+                        </tr>
+                    </table>
+                </div>
+            </apex:outputPanel>
+            
+            <apex:form id="formId" >
+                <apex:actionFunction name="nextTask" action="{!changeToNextTask}" reRender="mainELearnPanel, detailsModalPanel, detailsModalPanel_Task"/>
+                <apex:actionFunction name="nextStep" action="{!changeToNextStep}" reRender="mainELearnPanel, detailsModalPanel, detailsModalPanel_Task" onComplete="showMessages();"/>
+                <apex:actionFunction name="continueStep" action="{!changeToNextStep}" reRender="mainELearnPanel, detailsModalPanel, detailsModalPanel_Task" />
+                <apex:actionFunction name="rollBack" action="{!rollBacktoFirst}"  reRender="mainELearnPanel, detailsModalPanel, detailsModalPanel_Task"/>
+                <apex:actionFunction name="prevTaskAndReset" action="{!changeToprevTask}"  reRender="mainELearnPanel, detailsModalPanel, detailsModalPanel_Task"/>
+                <apex:actionFunction name="prevStepAndReset" action="{!changeToprevStep}"  reRender="stepPanel, mainELearnPanel, detailsModalPanel, detailsModalPanel_Task"/>
+                <apex:actionFunction name="stopVideo" reRender="detailsModalPanel, detailsModalPanel_Task"/>
+                <apex:inputhidden value="{!hintCount}" id="finalHintCount" />
+            </apex:form>
+                
+            <div class="workSpace">
+                <iframe src="/home/home.jsp" style="width:100%;height:100%;"/>
+            </div>
+            
+            <!-- modal window for STEP detail -->
+            <div id="detailsModal" class="modal hide fade" aria-labelledby="detailsModalLabel" data-backdrop="static" data-keyboard="false" aria-hidden="true">
+                <div class="modal-header">
+                    <h3 id="detailsModalLabel">Details</h3>
+                </div>
+                <div class="modal-body" id="detailsModalBody">
+                    <apex:outputPanel id="detailsModalPanel">
+                        
+                        <apex:outputPanel rendered="{!currentStep.Description__c != null}">
+                            <div class="detailHeader" onclick="$('#descBody').slideToggle();">Description</div>
+                            <div id="descBody" class="detailBody">
+                                <apex:outputField value="{!currentStep.Description__c}"/>
+                            </div>
+                        </apex:outputPanel>
+                        <br/>
+                        <apex:outputPanel rendered="{!currentStep.VideoID__c != null}">
+                            <div class="detailHeader" onclick="$('#videoBody').slideToggle();">Video</div>
+                            <div id="videoBody" class="detailBody">
+                                <center>
+                                <iframe id="videoPlayer" width="640px" height="360px" src="http://www.youtube.com/v/{!currentStep.VideoID__c}?version=3&enablejsapi=1" frameborder="0" allowfullscreen="true"></iframe>
+                                </center>
+                            </div>
+                        </apex:outputPanel> 
+                        <br/>
+                        <apex:outputPanel rendered="{!listOfStepAttach.size>0}">
+                            <div class="detailHeader" onclick="$('#stepImgCarousel').slideToggle();">Images</div>
+                            <br/> 
+                            <div id="stepImgCarousel" class="carousel slide detailBody">
+                                <div class="carousel-inner">
+                                    <!-- <div class="item active">
+                                        <center style="min-height:250px"><apex:outputField value="{!currentStep.Body__c}"/> </center>
+                                    </div> -->
+                                    <apex:repeat value="{!listOfStepAttach}" var="att">
+                                        <div class="item">
+                                            <center>
+                                                <apex:image style="max-height:250px ;max-width:500px" value="{!URLFOR($Action.Attachment.Download, att.id)}"/>
+                                            </center> 
+                                        </div>
+                                    </apex:repeat>
+                                </div>
+                                <a class="carousel-control left" href="#stepImgCarousel" data-slide="prev">&lsaquo;</a>
+                                <a class="carousel-control right" href="#stepImgCarousel" data-slide="next">&rsaquo;</a>
+                            </div>
+                            
+                            <!-- script to start the carousel onm its own -->
+                            <script>
+                                $('.carousel').carousel('next');
+                            </script>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!listOfStepAttach.size == 0  && currentStep.VideoID__c == null &&  currentStep.Description__c == null}">
+                            <center>No Details Available For This Step</center>
+                            <br/>
+                        </apex:outputPanel>
+                                           
+                    </apex:outputPanel>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="stopVideo()">Close</button>
+                </div>
+
+            </div>
+            
+            <!-- modal window for TASK detail -->
+            <div id="detailsModal_Task" class="modal hide fade" aria-labelledby="detailsModalLabel_Task" data-backdrop="static" data-keyboard="false" aria-hidden="true">
+                <div class="modal-header">
+                    <h3 id="detailsModalLabel_Task">Details</h3>
+                </div>
+                <div class="modal-body" id="detailsModalBody_Task">
+                    <apex:outputPanel id="detailsModalPanel_Task">
+                        
+                        <apex:outputPanel rendered="{!currentTask.Description__c != null}">
+                            <div class="detailHeader" onclick="$('#descBody').slideToggle();">Description</div>
+                            <div id="descBody" class="detailBody">
+                                <apex:outputField value="{!currentTask.Description__c}"/>
+                            </div>
+                        </apex:outputPanel>
+                        <br/>
+                        <apex:outputPanel rendered="{!currentTask.Video_ID__c != null}">
+                            <div class="detailHeader" onclick="$('#videoBody_Task').slideToggle();">Video</div>
+                            <div id="videoBody_Task" class="detailBody">
+                                <center>
+                                <iframe id="videoPlayer_Task" width="640px" height="360px" src="http://www.youtube.com/v/{!currentTask.Video_ID__c}?version=3&enablejsapi=1" frameborder="0" allowfullscreen="true"></iframe>
+                                </center>
+                            </div>
+                        </apex:outputPanel> 
+                        <br/>
+                        <apex:outputPanel rendered="{!currentTask.Attachments.size>0}">
+                            <div class="detailHeader" onclick="$('#stepImgCarousel_Task').slideToggle();">Images</div>
+                            <br/> 
+                            <div id="stepImgCarousel_Task" class="carousel slide detailBody">
+                                <div class="carousel-inner">
+                                    <!-- <div class="item active">
+                                        <center style="min-height:250px"><apex:outputField value="{!currentStep.Body__c}"/> </center>
+                                    </div> -->
+                                    <apex:repeat value="{!currentTask.Attachments}" var="att">
+                                        <div class="item">
+                                            <center>
+                                                <apex:image style="max-height:250px ;max-width:500px" value="{!URLFOR($Action.Attachment.Download, att.id)}"/>
+                                            </center> 
+                                        </div>
+                                    </apex:repeat>
+                                </div>
+                                <a class="carousel-control left" href="#stepImgCarousel_Task" data-slide="prev">&lsaquo;</a>
+                                <a class="carousel-control right" href="#stepImgCarousel_Task" data-slide="next">&rsaquo;</a>
+                            </div>
+                            
+                            <!-- script to start the carousel onm its own -->
+                            <script>
+                                $('#stepImgCarousel_Task').carousel('next');
+                            </script>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!(currentTask.Attachments == null || currentTask.Attachments.size == 0)  && currentTask.Video_ID__c == null &&  currentTask.Description__c == null}">
+                            <center>No Details Available For This Task</center>
+                            <br/>
+                        </apex:outputPanel>
+                                           
+                    </apex:outputPanel>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="stopVideo()">Close</button>
+                </div>
+            </div>
+            
+            
+            <!-- *** modal window for Errors *** -->
+            <div class="modal hide fade" id="errorModal" aria-labelledby="modallabel" aria-hidden="true">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>
+                        <h3 id="modaldlabel">Error</h3>
+                </div>
+                <div class="modal-body" id="errorBody">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true">Ok</button>
+                </div>
+
+            </div>
+            <!-- *** END  modal window for Error *** -->
+            
+            
+            <!-- *** modal window for hint *** -->
+            <div class="modal hide fade" id="hint" aria-labelledby="modallabel" aria-hidden="true">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>
+                        <h3 id="modaldlabel">Hint</h3>
+                </div>
+                <div class="modal-body" id="hintBody">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true">Ok</button>
+                </div>
+
+            </div>
+            <!-- *** END  modal window for hint *** -->
+            
+            <!-- script for querying hints -->
+            <script src="/soap/ajax/27.0/connection.js" type="text/javascript"></script>
+            <script src="/soap/ajax/27.0/apex.js" type="text/javascript"></script>
+            <script>
+                
+                //this will bring the upper pane in focus, if already in focus it will hide/show the pane 
+                function toggleUpperPane(){
+                    if(window.pageYOffset < 100){
+                        $('#upperDiv').slideToggle(); 
+                    }else{
+                        $("html, body").animate({ scrollTop: 0 });
+                        if($('#upperDiv').css('display') == 'none'){
+                            $('#upperDiv').slideToggle(); 
+                        }
+                    }
+                }
+                
+                function getErrorsforTask(messages){
+                    var msg = messages.replace('[','').replace(']','');
+                    
+                    $("#errorBody").empty();
+                    
+                    var bdy = $("#errorBody").append('<p class="text-error">'+msg+'</p>');
+                    
+                }
+                
+                //function to get the hint corresponding to a particular step
+                //
+                // SPR - 6/26/13 - Modified this function to pass in current step to fix problem with hints not reflecting
+                //                    step changes.  Remember that apex variable notation is only executed at run time for
+                //                    the code it is in.  Since this was rendered once when the page was first painted, 
+                //                    it was always set to the first step.
+                //
+                function getHint(currentStepId)
+                {
+                    sforce.connection.sessionId = "{!$Api.Session_ID}";
+                    //sessionStorage.setItem("sequenceCount_step",-1);
+                    var seqCnt = sessionStorage.getItem("sequenceCount_step");
+                    var oldStepId = sessionStorage.getItem("stepId");
+                    //sessionStorage.setItem("stepId",'{!currentStepId}');
+                    sessionStorage.setItem("stepId",currentStepId);
+                    //if(oldStepId != '{!currentStepId}')
+                    if(oldStepId != currentStepId)
+                    {
+                        seqCnt = '';
+                    }
+                    if(seqCnt == NaN || seqCnt == undefined)
+                        seqCnt = '';
+
+                    console.log(seqCnt);
+
+                    //Code snippet to store the hint count (or) in other words the number of hints utilised by the user.
+                    var hintCount = 0;
+                    if(sessionStorage.getItem("currHintCount") != null && sessionStorage.getItem("currHintCount") != '')
+                        hintCount = sessionStorage.getItem("currHintCount");
+
+                    var scoreRecords = sforce.connection.query('Select Id,Final_Score__c from Score__c where User__c = \'{!$User.Id}\' AND Step__c = \'' + currentStepId + '\'');
+                    var scoreResults = scoreRecords.getArray("records");
+                    console.log('score-- '+scoreResults);
+                    var prevScore  = -50;
+                    if(scoreResults.length != 0)
+                        prevScore = scoreResults[0].Final_Score__c;
+                    /***************** Hint Count code end *****************************/
+
+
+                    //var queryStr = 'Select Id,Sequence__c,Body__c from Message__c where type__c = \'Hint\' AND Step__c = \'{!currentStepId}\'';
+                    var queryStr = 'Select Id,Sequence__c,Body__c from Message__c where type__c = \'Hint\' AND Step__c = \'' + currentStepId + '\'';     
+                    
+                    if(sessionStorage.getItem("sequenceCount_step") != null && sessionStorage.getItem("sequenceCount_step") != '')
+                    {
+                         
+                         var seqArray = new Array();
+                         seqArray = seqCnt.split(',');
+                         var seqNumberArray = new Array();
+                         for(var a=0;a<seqArray.length;a++)
+                         {
+                            seqNumberArray.push(Number(seqArray[a]));
+                         }
+                         queryStr += ' and Sequence__c NOT in (' + seqNumberArray.join(',') + ') ';
+                    }
+
+                    queryStr +=' order by Sequence__c asc limit 1';
+                    console.log('quer-- '+queryStr);
+                    //alert("query : " + queryStr);
+                    var hintQuery = sforce.connection.query(queryStr);
+                    var hintResults = hintQuery.getArray("records");
+                    var hintMessage = '';
+
+
+                    if(hintResults.length == 0)
+                    {
+                        hintMessage = 'Sorry! All out of hints';
+                    }
+                    else
+                    {
+                        hintMessage = hintResults[0].Body__c;
+                        hintCount++;
+                        sessionStorage.setItem("currHintCount",hintCount);
+                        if(hintCount == 1)
+                        {
+                            hintMessage += '</br></br></br><span style="font-family:georgia;color:grey">Note: You have used <span style="font-size:1.2em">'+ hintCount + ' </span>hint for this step, Points Lost: <span style=\"color:red;font-weight:bold;font-size:1.2em;\">1</span> Points remaining: <span style=\"color:green;font-weight:bold;font-size:1.2em;\">11</span>';
+                        }
+                        else if(hintCount == 2)
+                        {
+                            hintMessage += '</br></br></br><span style="font-family:georgia;color:grey">Note: You have used <span style="font-size:1.2em">'+ hintCount + ' </span> hints for this step, Points Lost: <span style=\"color:red;font-weight:bold;font-size:1.2em;\">4</span> Points remaining: <span style=\"color:green;font-weight:bold;font-size:1.2em;\">8</span>';
+                        }
+                        else if(hintCount == 3)
+                        {
+                            hintMessage += '</br></br></br><span style="font-family:georgia;color:grey">Note: You have used <span style="font-size:1.2em">'+ hintCount + '</span> hints for this step, Points Lost: <span style=\"color:red;font-weight:bold;font-size:1.2em;\">9</span>  Points remaining: <span style=\"color:green;font-weight:bold;font-size:1.2em;\">3</span></span>';
+                        }
+
+                        if(prevScore != -50)
+                           hintMessage +=  '</br><span style="font-family:georgia;color:grey"> Previous Score for this step: <span style=\"font-weight:bold;font-size:1.2em;\">'+Number(prevScore)+'</span>';
+
+                        var updatedSeq = seqCnt + ','+hintResults[0].Sequence__c;
+                        sessionStorage.setItem("sequenceCount_step",updatedSeq);
+                    }
+                    console.log(hintCount);
+                    document.getElementById("pageId:formId:finalHintCount").value = hintCount;
+                    $("#hintBody").html(hintMessage);
+                }
+                
+                //function to get the hint corresponding to a particular task
+                function getHintForTask()
+                {
+                    sforce.connection.sessionId = "{!$Api.Session_ID}";
+                    var seqCnt_task = sessionStorage.getItem("sequenceCount_task");
+                    var oldTaskId = sessionStorage.getItem("taskId");
+                    sessionStorage.setItem("taskId",'{!currentTaskId}');
+                    
+                    if(oldTaskId != '{!currentTaskId}')
+                    {
+                        seqCnt_task = '';
+                    }
+                    if(seqCnt_task == NaN || seqCnt_task == undefined)
+                        seqCnt_task = '';
+
+                    console.log(seqCnt_task);
+                    var queryStr_task = 'Select Id,Sequence__c,Body__c from Message__c where Task__c = \'{!currentTaskId}\' AND Type__c = \'Hint\'';
+
+                    if(sessionStorage.getItem("sequenceCount_task") != null && sessionStorage.getItem("sequenceCount_task") != '')
+                    {
+                         
+                         var seqArray_task = new Array();
+                         seqArray_task = seqCnt_task.split(',');
+                         var seqNumberArray_task = new Array();
+                         for(var a=0;a<seqArray_task.length;a++)
+                         {
+                            seqNumberArray_task.push(Number(seqArray_task[a]));
+                         }
+                         queryStr_task += ' and Sequence__c NOT in (' + seqNumberArray_task.join(',') + ') ';
+                    }
+
+                    queryStr_task +=' order by Sequence__c asc limit 1';
+                    var hintQuery_task = sforce.connection.query(queryStr_task);
+                    var hintResults_task = hintQuery_task.getArray("records");
+                    var hintMessage_task = '';
+
+                    if(hintResults_task.length == 0)
+                    {
+                        hintMessage_task = 'Sorry! All out of hints';
+                    }
+                    else
+                    {
+                        hintMessage_task = hintResults_task[0].Body__c;
+                        var updatedSeq_task = seqCnt_task + ','+hintResults_task[0].Sequence__c;
+                        sessionStorage.setItem("sequenceCount_task",updatedSeq_task);
+                    }
+
+                    $("#hintBody").html(hintMessage_task);
+                }
+                
+                function showMessages(){
+                    //alert("Message");
+                    $('#messageModal').modal('show');
+                }
+                
+                function continueStepAndClose(){
+                    $('#messageModal').modal('hide');
+                    continueStep();
+                }
+                
+                
+                
+                <!-- quickview script -->
+                function toggleQuickView(){
+                    
+                    if($("#exercisePuller_ext").css('display') == 'none'){
+                        $('.exerciseBody_QuickView #quickView_table_div').toggle('slide', {direction: 'right'}, 500, function(){$(".exercisePuller").toggle();});
+                    }else{
+                        $(".exercisePuller").toggle();
+                        $('.exerciseBody_QuickView #quickView_table_div').toggle('slide', {direction: 'right'}, 500);
+                    }
+                }
+                
+            </script>
+
+        </apex:page>

@@ -1,0 +1,46 @@
+<apex:page sidebar="false" standardController="Exercise__c" extensions="elearningExt">
+	<style>
+		.logo{
+			width: 50px;
+			height: 50px; 
+		}
+		
+		table {
+			width: 100%;
+			border: 0px;
+		}
+	</style>
+
+	<apex:form >
+		<table cellpadding = "3" cellspacing = "3">
+		    <tr>
+		        <th></th>
+		        <th>Exercise Description</th>
+		        <th>Exercise Steps</th>
+		    </tr>
+		    <tr>
+		        <td><apex:image url="{!$Resource.eLearningLogo}" styleClass="logo"/></td>
+		        <td>
+		            {!Exercise__c.Body__c}
+		            <apex:dataList value="{!tasks}" var="t">
+		                <apex:outputText value="{!t.Body__c}"/>
+		            </apex:dataList>
+		        </td>
+		        <td>
+		            <apex:dataList value="{!steps}" var="s">
+		                <apex:outputText value="{!s.Body__c}"/>
+		            </apex:dataList>      
+		            <apex:commandButton value="Hint"/>
+		            <apex:commandButton value="Details"/>
+		            <apex:commandButton value="Next step"/>
+		        </td>
+		    </tr>
+		</table>
+	</apex:form>
+	<script type="text/javascript">
+	  var url = parent.document.URL; 
+	  var parts = url.split("/");
+	  document.write('<iframe src="https://' + parts[2] + '?Id=a00i0000003Xd0h" width="100%" height="800px"></iframe>');
+	</script>
+
+</apex:page>

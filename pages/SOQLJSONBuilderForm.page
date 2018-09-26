@@ -1,0 +1,390 @@
+<apex:page controller="SOQLJSONBuilderFormController" docType="HTML-5.0"
+	showHeader="false" sidebar="false" standardStylesheets="false">
+
+	<apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.js')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.bootstrap, 'css/bootstrap.css')}" />
+
+	<style>
+#soqlBuilderBlock {
+	height: 100%;
+	padding: 50px 10px 10px;
+}
+
+#soqlHeader {
+	background-color: #DDD;
+	box-shadow: 2px 2px 1px #555;
+	padding: 1px 5px;
+}
+
+#soqlBuilderBody {
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+div.soqlBuilderButtonClass {
+	border-top: 1px solid #AAA;
+	padding-top: 5px;
+	/*position : absolute;*/
+	bottom: 5px;
+	left: 10px;
+	right: 10px;
+}
+
+div.upperSection {
+	margin-top: 10px;
+}
+
+#soqlTable tr td {
+	padding: 1px 3px;
+	vertical-align: top;
+}
+
+label {
+	font-weight: bold !important;
+}
+
+#upperSectionFrameTable{
+	width: 100%;
+}
+
+.tableHeading{
+	text-align: left;
+}
+
+.PageMessages{
+	color: red;
+}
+.fieldValueDiv{
+	padding-top: 10px; 
+	text-align: center;
+}
+.whereValueTextArea{
+	width:250px;
+	height:20px;
+}
+</style>
+	<apex:outputpanel id="closeFormOP">
+		<script>
+        function closeAndRefresh() {
+            if({!generateJSONSuccess}) {
+              opener.location.reload(); // or opener.location.href = opener.location.href;
+              window.close(); // or self.close();
+            }
+        }
+    </script>
+	</apex:outputpanel>
+
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<a class="brand" href="#">SOQL JSON Builder Form</a>
+			<ul class="nav pull-right">
+				<!-- <li><a href="javascript:toggleUpperPane()"><i class="icon-tasks"/></a></li>  -->
+			</ul>
+		</div>
+	</div>
+
+	<apex:form id="soqljsonBuiderForm">
+
+		<apex:actionFunction name="jsAddNewRow" action="{!addFieldValueRow}"
+			rerender="createActionOP,messageSec" />
+		<apex:actionFunction name="jsAddNewWhereClauseRow"
+			action="{!addNewWhereClauseRow}" rerender="readActionOP,messageSec" />
+
+		<apex:actionFunction name="jsReset" action="{!reset}"
+			rerender="actionFormOP,messageSec" />
+		<apex:actionFunction name="jsGenerateJSON"
+			action="{!generateAndSaveJSON}"
+			rerender="actionFormOP,closeFormOP,messageSec"
+			oncomplete="closeAndRefresh();" />
+
+		<div id="upperDiv" class="upperSection">
+			<div class="PageMessages">
+				<apex:pageMessages id="messageSec" />
+			</div>
+			<table id="upperSectionFrameTable" >
+				<tr>
+					<td id="cell-exercise">
+						<div id="soqlBuilderBlock">
+							<div id="soqlHeader">Select Object</div>
+							<div id="soqlBuilderBody">
+								<table id="soqlTable" class="table-hover">
+									<tr>
+										<td><label class="control-label" for="objectNameSelect">Object
+												Name</label>
+											<div class="controls">
+												<apex:actionRegion >
+													<apex:selectList id="objectNameSelect"
+														value="{!selectedObjectName}" size="1"
+														styleclass="input-xlarge">
+														<apex:selectOptions value="{!sObjectSelectOptionList}" />
+														<apex:actionSupport event="onchange"
+															action="{!onObjectChange}"
+															rerender="actionFormOP,actionTypeOP,messageSec" />
+													</apex:selectList>
+												</apex:actionRegion>
+											</div></td>
+										<td><apex:outputpanel id="actionTypeOP">
+												<label class="control-label" for="actionTypeSelect">Action
+													Type</label>
+												<div class="controls">
+													<apex:actionRegion >
+														<apex:selectList id="actionTypeSelect"
+															value="{!selectedActionType}" size="1"
+															styleclass="input-medium"
+															disabled="{!NOT(isObjectNameSelected)}">
+															<apex:selectOptions value="{!allActions}" />
+															<apex:actionSupport event="onchange"
+																action="{!showSelectedActionForm}"
+																rerender="actionFormOP,messageSec" />
+														</apex:selectList>
+													</apex:actionRegion>
+												</div>
+											</apex:outputpanel></td>
+									</tr>
+
+								</table>
+							</div>
+						</div> <apex:outputpanel id="actionFormOP">
+
+							<apex:outputpanel rendered="{!OR(showFieldValueSection,showWhereClauseSection)}">
+								<div id="soqlHeader">{!selectedActionType} Action</div>
+							</apex:outputpanel>
+
+							<!-- Section for action type create  -->
+							<apex:outputpanel id="createActionOP"
+								rendered="{!showFieldValueSection}">
+
+								<apex:variable var="createActionIndex" value="{!0}" />
+								<apex:variable var="createActionDltIndex" value="{!0}" />
+
+								<div class="controls fieldValueDiv">
+									<button id="addNewfieldValueBtn" name="addNewfieldValueBtn"
+										class="btn btn-default" onclick="jsAddNewRow();return false;">Add
+										New Row</button>
+								</div>
+								<div id="soqlBuilderBody">
+									<table id="soqlTable" class="table-hover">
+										<thead>
+											<tr class="headerRow dataRow">
+												<th class="tableHeading">Seq. No.</th>
+												<th class="tableHeading">Field Name</th>
+												<th class="tableHeading">Field Value</th>
+											</tr>
+										</thead>
+										<tbody>
+											<apex:repeat value="{!fieldValues}" var="fv">
+												<tr>
+													<td><apex:variable var="createActionIndex"
+															value="{!createActionIndex+1}" />
+														{!TEXT(createActionIndex)}</td>
+													<td>
+														<div class="controls">
+															<apex:selectList id="objectNameSelect"
+																value="{!fv.fieldName}" size="1"
+																styleclass="input-xlarge">
+																<apex:selectOptions value="{!fieldOptions}" />
+															</apex:selectList>
+														</div></td>
+													<td>
+														<div class="controls">
+															<apex:inputText value="{!fv.value}" />
+														</div></td>
+													<td><apex:variable var="createActionDltIndex"
+															value="{!createActionDltIndex+1}" /> <apex:commandLink action="{!deleteFieldValueRow}"
+															rerender="createActionOP,messageSec"
+															status="processingStatus">
+															<apex:param name="ob"
+																assignTo="{!fieldValueIndexToDelete}"
+																value="{!createActionDltIndex}" />
+															<apex:outputlabel value="Remove" />
+														</apex:commandLink></td>
+												</tr>
+											</apex:repeat>
+										</tbody>
+									</table>
+								</div>
+							</apex:outputpanel>
+
+							<!-- Section for action type Read  -->
+							<apex:outputpanel id="readActionOP"
+								rendered="{!showWhereClauseSection}">
+
+								<apex:variable var="readActionIndex" value="{!0}" />
+								<apex:variable var="readActionDltIndex" value="{!0}" />
+
+								<br />
+
+								<div id="soqlBuilderBody">
+									<!-- Query field section  -->
+									<blockquote>
+										<p>
+											<b>Select Query Fields</b>
+										</p>
+										<hr />
+									</blockquote>
+									<div class="controls">
+
+										<c:MultiselectPicklist leftLabel="Available Fields"
+											leftOptions="{!multiselectFieldOption}"
+											rightLabel="Selected Fields"
+											rightOptions="{!selectedQueryFieldOption}" size="14"
+											width="250px" height="150px" />
+									</div>
+
+									<br />
+									<!--  Where clause section-->
+									<blockquote>
+										<p>
+											<b>Add Where Clause</b>
+											<button id="addWhereClausBtn" name="addWhereClausBtn"
+												class="btn btn-default pull-right"
+												onclick="jsAddNewWhereClauseRow();return false;">Add
+												New Row</button>
+										</p>
+										<hr />
+									</blockquote>
+									<table id="soqlTable" class="table-hover">
+										<thead>
+											<tr class="headerRow dataRow">
+												<th class="tableHeading">&nbsp;&nbsp;</th>
+												<th class="tableHeading">Field Name</th>
+												<th class="tableHeading">Type</th>
+												<th class="tableHeading">Operator</th>
+												<th class="tableHeading">Field Value</th>
+												<th class="tableHeading"><apex:outputLabel value="AND/OR" />
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											<apex:repeat value="{!whereFields}" var="wf">
+												<tr>
+													<td><apex:variable var="readActionIndex"
+															value="{!readActionIndex+1}" /> {!TEXT(readActionIndex)}
+													</td>
+													<td>
+														<div class="controls">
+															<apex:selectList id="whereFldSelect"
+																value="{!wf.whrField}" size="1"
+																styleclass="input-xlarge">
+																<apex:selectOptions value="{!fieldOptions}" />
+															</apex:selectList>
+														</div></td>
+													<td>
+														<div class="controls">
+															<apex:selectList id="whereTypeSelect"
+																value="{!wf.whrType}" size="1" styleclass="input-medium">
+																<apex:selectOptions value="{!whereClauseTypeOptions}" />
+															</apex:selectList>
+														</div></td>
+													<td>
+														<div class="controls">
+															<apex:selectList id="whereOperatorSelect"
+																value="{!wf.whrOperator}" size="1"
+																styleclass="input-medium">
+																<apex:selectOptions value="{!whereOperatorOptions}" />
+															</apex:selectList>
+														</div></td>
+													<td>
+														<div class="controls">
+															<!-- <apex:inputText value="{!wf.whrValue}" />  -->
+															<apex:inputTextarea value="{!wf.whrValue}"
+																styleclass="whereValueTextArea" />
+														</div></td>
+													<td>
+														<div class="controls">
+															<apex:selectList id="andOrSelect"
+																value="{!wf.nextwhrANDOR}" size="1"
+																styleclass="input-small">
+																<apex:selectOptions value="{!ANDOROptions}" />
+															</apex:selectList>
+														</div></td>
+													<td><apex:variable var="readActionDltIndex"
+															value="{!readActionDltIndex+1}" /> <apex:commandLink action="{!deleteWhereClauseRow}"
+															rerender="readActionOP,messageSec"
+															status="processingStatus">
+															<apex:param name="ob"
+																assignTo="{!whereClauseIndexToDelete}"
+																value="{!readActionDltIndex}" />
+															<apex:outputlabel value="Remove" />
+														</apex:commandLink></td>
+												</tr>
+											</apex:repeat>
+										</tbody>
+									</table>
+									<br />
+
+									<!-- Order by field section -->
+									<blockquote>
+										<p>
+											<b>Select Order By Fields</b>
+										</p>
+										<hr />
+									</blockquote>
+									<div class="controls">
+										<c:MultiselectPicklist leftLabel="Available Fields"
+											leftOptions="{!multiselectFieldOption}"
+											rightLabel="Selected Fields"
+											rightOptions="{!selectedOrderByFieldOption}" size="14"
+											width="250px" height="100px" />
+									</div>
+
+									<table id="soqlTable" class="table-hover">
+										<tr>
+											<td>
+												<!-- Order By direction section -->
+												<blockquote>
+													<p>
+														<b>Select Order Direction</b>
+													</p>
+													<hr />
+												</blockquote>
+												<div class="controls">
+													<apex:selectList id="orderBySelect"
+														value="{!soqlJsonObj.query.orderDir}" size="1"
+														styleclass="input-medium">
+														<apex:selectOptions value="{!orderByOptions}" />
+													</apex:selectList>
+												</div></td>
+											<td>
+												<!-- Query Limit section -->
+												<blockquote>
+													<p>
+														<b>Row Limit</b>
+													</p>
+													<hr />
+												</blockquote>
+												<div class="controls">
+													<apex:inputText value="{!soqlJsonObj.query.limitQuery}"
+														styleclass="input-small" />
+												</div></td>
+										</tr>
+									</table>
+								</div>
+								<br />
+							</apex:outputpanel>
+							<!-- end of read section -->
+
+
+						</apex:outputpanel> <br />
+						<div class="soqlBuilderButtonClass">
+							<center>
+								<button class="btn btn-primary"
+									onclick="jsGenerateJSON(); return false;">
+									<apex:outputLabel value="Generate & Save JSON" />
+								</button>
+								<button class="btn btn-primary"
+									onclick="jsReset(); return false;">
+									<apex:outputLabel value="Reset" />
+								</button>
+								<button class="btn btn-primary"
+									onclick="window.close(); return false;">
+									<apex:outputLabel value="Close" />
+								</button>
+							</center>
+						</div></td>
+				</tr>
+			</table>
+		</div>
+
+	</apex:form>
+</apex:page>

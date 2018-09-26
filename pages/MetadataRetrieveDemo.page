@@ -1,0 +1,101 @@
+<apex:page controller="MetadataRetrieveDemo">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $ = jQuery.noConflict();
+    
+        function getMetadataItems(metadataType) {
+            $('#loading').html('loading ...');
+            $('#zip').html('');
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MetadataRetrieveDemo.getMetadataItems}',
+                metadataType, 
+                function(result, event) {
+                    // now populate the metadata item select list
+                    console.log(result);
+                    
+                    var options = [];
+                    
+                    options.push('<option value="">Please select an item</option>');
+                    for(i = 0; i < result.length; i++)
+                    	options.push('<option value="'+ result[i] +'">'+ result[i] +'</option>');
+                    
+                    $('#metadata-item').html(options.join(''));
+                    
+                    $('#loading').html('');
+                }
+            );
+        }
+        
+        function getMetadataItem(metadataItem) {
+            $('#loading').html('loading ...');
+            
+            var metadataType = $('#metadata-type').val();
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MetadataRetrieveDemo.getMetadataItem}',
+                metadataType, metadataItem,
+                function(result, event) {
+                    // now show the retrieve result
+                    console.log(result);
+                    
+                    var org = result[0];
+                    var process = result[1];
+                    var files = result[2].split(',');
+                    
+                    var links = [];
+                    for(i = 0; i < files.length; i++) {
+                        links.push('<a href="https://cs2471-soe.herokuapp.com/retrieve/'+ org +'/'+ process +'?path='+ files[i] +'" target="_blank">'+ files[i] +'</a>');  
+                    }
+                                   
+                    $('#zip').html(links.join('<br />'));
+                    
+                    $('#loading').html('');
+                }
+            );
+        }
+    
+    	$(document).ready(function(){
+        	
+            $('#metadata-type').on('change', function(){
+               console.log($(this).val());
+               getMetadataItems($(this).val()); 
+            });
+            
+            $('#metadata-item').on('change', function(){
+               getMetadataItem($(this).val()); 
+            });
+        });
+
+    </script>
+    <div class="select">
+        <span>Metadata Type:</span>
+        <select id="metadata-type">
+            <option value="">Select One</option>
+            <option value="ApexClass">ApexClass</option>
+            <option value="ApexPage">ApexPage</option>
+            <option value="ApexComponent">ApexComponent</option>
+            <option value="Queue">Queue</option>
+        </select>
+    </div>
+    <div class="select">
+        <span>Metadata Item:</span>
+        <select id="metadata-item">
+            <option>Empty</option>	    
+        </select>
+    </div>
+    <div id="loading"></div>
+    
+    <hr />
+    <strong>Retrieval Content</strong>
+    <div id="zip">
+        
+    </div>
+    
+    <style type="text/css">
+    	.select span {
+        	display: inline-block;
+        	width: 120px;
+        }
+    </style>
+</apex:page>

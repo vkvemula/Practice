@@ -1,0 +1,92 @@
+<apex:page controller="ApexClassSelector">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script type="text/javascript">
+        $ = jQuery.noConflict();
+    
+        function getClasses() {
+            $('#loading').html('loading ...');
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ApexClassSelector.getClasses}',
+                function(result, event) {
+                    // now populate the metadata item select list
+                    console.log(result);
+                    
+                    var options = [];
+                    
+                    options.push('<option value="">Please select a validation class</option>');
+                    for(i = 0; i < result.length; i++)
+                    	options.push('<option value="'+ result[i] +'">'+ result[i] +'</option>');
+                    
+                    $('#class').html(options.join(''));
+                    
+                    $('#loading').html('');
+                }
+            );
+        }
+        
+        function getParams(className) {
+            $('#loading').html('loading ...');
+            $('#code').html('');
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ApexClassSelector.getParams}',
+                className,
+                function(result, event) {
+                    console.log(result);
+                    
+                    var params = [];
+                    var variables = [];
+                    
+                    for(i = 0, j = 1; i < result.length; i++, j++) {
+                        params.push('<li>'+ result[i] +'</li>');
+
+                        variables.push('param'+ j);
+                    }
+           
+                    $('#params').html(params.join(''));
+                    $('#code').html(
+                    	className +'.validate( new List&lt;String&gt;{\''+
+                        variables.join('\',\'')
+                        +'\'} );'
+                    );
+                    
+                    $('#loading').html('');
+                    
+                    
+                }
+            );
+        }
+    
+    	$(document).ready(function(){
+        	getClasses();
+            
+            $('#class').on('change', function(){
+               console.log($(this).val());
+               getParams($(this).val()); 
+            });
+        });
+
+    </script>
+    
+    <div class="select">
+        <span>Class:</span>
+        <select id="class">
+        </select>
+    </div>
+    <div id="loading"></div>
+    
+    <hr />
+    <strong>Params</strong>
+    <ol id="params">
+    </ol>
+    <pre id="code" style="font-family: consolas, monospace; padding: 4px;">
+    </pre>
+    <strong>Code</strong>
+    <style type="text/css">
+    	.select span {
+        	display: inline-block;
+        	width: 120px;
+        }
+    </style>    
+</apex:page>

@@ -1,0 +1,70 @@
+<!-- author: soe@soe.im -->
+<apex:page controller="ElearningExercisesController" docType="HTML-5.0" showHeader="false" sidebar="false" standardStylesheets="false">
+
+    <apex:includeScript value="{!$Resource.jQuery}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bootstrap, 'css/bootstrap.css')}"/>
+
+    <style>
+        
+        body {
+            padding-top:40px;
+        }
+        
+        #logo {
+            width: 100px;
+        }
+        
+        .icon-Active {
+            background-position: -120px 0; // icon-star
+        }
+        
+        .icon-Inactive {
+            background-position: -144px 0; // icon-star-empty
+        }
+
+        
+    </style>
+    
+    
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <a class="brand" href="#">{!pageHeader}</a>
+        </div>
+    </div>
+    
+    <!-- logo is managed via the staticresource -->
+    <img src="{!$Resource.eLearningLogo}" id="logo" />
+    
+    
+    <!-- exercises listed in a table using apex:repeat -->
+    <table class="table table-bordered">
+        <!-- table header -->
+        <tr>
+            <th class="span2">Exercise Number</th>
+            <th class="">Details Body</th>
+            <th class="span2">Total Tasks</th>
+            <th class="span1">Active</th>
+            <th class="span2">Launch</th>
+        
+        </tr>
+        
+        <!-- table body -->
+        <apex:repeat value="{!exercises}" var="exercise" id="theRepeat">
+        <tr>
+            <td>{!exercise.Name}</td>
+            <td>
+                <apex:outputText value="{!exercise.Summary__c}" escape="false" />
+            </td>
+            <td>{!exercise.ActiveTasks__c}</td>
+            <td>
+                <i class="icon icon-{!exercise.Status__c}" />
+            </td>
+            <td>
+                <a href="/apex/eLearningLandingPage?id={!exercise.Id}">Launch</a>
+            </td>
+        </tr>
+        </apex:repeat>
+    </table>
+    
+</apex:page>

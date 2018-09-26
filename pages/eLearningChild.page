@@ -1,0 +1,5 @@
+<apex:page StandardController="Exercise__c">
+
+{!Exercise__c.Body__c}
+
+</apex:page>
